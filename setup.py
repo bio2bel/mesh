@@ -13,6 +13,8 @@ INSTALL_REQUIRES = [
     'requests',
     'rdflib',
     'networkx',
+    'pybel',
+    'pybel-tools',
 ]
 
 HERE = os.path.abspath(os.path.dirname(__file__))

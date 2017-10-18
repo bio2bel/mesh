@@ -2,3 +2,5 @@ click
 requests
 rdflib
 networkx
+pybel
+pybel-tools

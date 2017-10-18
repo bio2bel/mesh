@@ -4,7 +4,7 @@ import pickle
 import types
 
 import networkx as nx
-import owlready
+
 import rdflib
 import requests
 from rdflib import RDFS, Namespace
@@ -120,6 +120,8 @@ def mesh_to_nx(store):
 
 
 def process_mesh(graph, iri=None):
+    import owlready
+    
     assert nx.is_directed_acyclic_graph(graph)
 
     o = owlready.Ontology(iri if iri is not None else MESH_OWL_IRI)

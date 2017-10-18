@@ -7,32 +7,11 @@ import logging
 
 from pybel.constants import NAMESPACE_DOMAIN_BIOPROCESS
 from pybel_tools.definition_utils import write_namespace
+from .utils import get_names
 log = logging.getLogger(__name__)
 
 
-def get_names(file, tree_prefix):
-    """Iterates over the names that match the given tree prefix
 
-    :param file file: The file containing Sumit-MeSH-JSON
-    :param str tree_prefix: The prefix to keep
-    :rtype: iter[str]
-    """
-    d = json.load(file)
-
-    for i, entry in enumerate(d):
-        if 'name' not in entry:
-            continue
-
-        name = entry['name']
-
-        if 'treeNumbers' not in entry:
-            log.debug('Missing tree from %s', name)
-            continue
-
-        if not any(tree.startswith(tree_prefix) for tree in entry['treeNumbers']):
-            continue
-
-        yield name
 
 
 def write_names(in_file, out_file, tree):
@@ -87,6 +66,22 @@ def write_meshc(in_file, out_file):
         values=get_names(in_file, 'C'),
         cacheable=True,
         functions='O',
+        file=out_file,
+    )
+
+
+def write_mesh_e_belns(in_file, out_file):
+    """Writes the MeSH [E] Analytical stuff to a BEL Namespace"""
+    write_namespace(
+        namespace_name='Analytical, Diagnostic and Therapeutic Techniques and Equipment Category',
+        namespace_keyword='MESHE',
+        namespace_description="MeSH Diseases",
+        namespace_domain=NAMESPACE_DOMAIN_BIOPROCESS,
+        author_name='Charles Tapley Hoyt',
+        author_contact='charles.hoyt@scai.fraunhofer.de',
+        citation_name='MeSH',
+        values=get_names(in_file, 'E'),
+        cacheable=True,
         file=out_file,
     )
 
