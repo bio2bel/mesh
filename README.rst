@@ -1,4 +1,4 @@
-bio2owl_mesh
+bio2bel_mesh
 ============
 Convert MeSH to BEL
 
@@ -12,5 +12,3 @@ Installation
 - `MeSH Information <https://id.nlm.nih.gov/mesh/>`_
 - `MeSH FTP <ftp://ftp.nlm.nih.gov/online/mesh/>`_
 - `MeSH RDF Download <ftp://ftp.nlm.nih.gov/online/mesh/mesh.nt.gz>`_
-
-
