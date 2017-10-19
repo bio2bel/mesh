@@ -36,21 +36,6 @@ def write_names(in_file, out_file, tree):
     )
 
 
-def write_meshf(in_file, out_file):
-    """Writes the MeSH [F] Psychiatry and Psychology to a BEL Namespace"""
-    write_namespace(
-        namespace_name='MESHF',
-        namespace_keyword='MESHF',
-        namespace_description="MeSH Psychiatry and Psychology",
-        namespace_domain=NAMESPACE_DOMAIN_BIOPROCESS,
-        author_name='Charles Tapley Hoyt',
-        author_contact='charles.hoyt@scai.fraunhofer.de',
-        citation_name='MeSH',
-        values=get_names(in_file, 'F'),
-        cacheable=True,
-        functions='O',
-        file=out_file,
-    )
 
 
 def write_meshc(in_file, out_file):
@@ -70,22 +55,6 @@ def write_meshc(in_file, out_file):
     )
 
 
-def write_mesh_e_belns(in_file, out_file):
-    """Writes the MeSH [E] Analytical stuff to a BEL Namespace"""
-    write_namespace(
-        namespace_name='Analytical, Diagnostic and Therapeutic Techniques and Equipment Category',
-        namespace_keyword='MESHE',
-        namespace_description="MeSH Diseases",
-        namespace_domain=NAMESPACE_DOMAIN_BIOPROCESS,
-        author_name='Charles Tapley Hoyt',
-        author_contact='charles.hoyt@scai.fraunhofer.de',
-        citation_name='MeSH',
-        values=get_names(in_file, 'E'),
-        cacheable=True,
-        file=out_file,
-    )
-
-
 if __name__ == '__main__':
     import os
 
@@ -96,7 +65,7 @@ if __name__ == '__main__':
     meshf_out_path = os.path.join(bel_resource_base, 'meshf.belns')
 
     with open(in_path) as in_file, open(meshf_out_path, 'w') as out_file:
-        write_meshf(in_file, out_file)
+        write_mesh_f_belns(in_file, out_file)
 
     meshc_out_path = os.path.join(bel_resource_base, 'meshc.belns')
 
