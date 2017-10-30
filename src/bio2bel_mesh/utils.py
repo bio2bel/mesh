@@ -7,7 +7,16 @@ import os
 log = logging.getLogger(__name__)
 
 owncloud_base = os.environ.get('OWNCLOUD_BASE')
-mesh_json_path = os.path.join(owncloud_base, 'mesh.json') if owncloud_base else None
+
+if 'MESH_JSON_PATH' in os.environ:
+    mesh_json_path = os.environ['MESH_JSON_PATH']
+elif owncloud_base is not None:
+    putative_mesh_json_path = os.path.join(owncloud_base, 'mesh.json')
+
+    if os.path.exists(putative_mesh_json_path):
+        mesh_json_path = putative_mesh_json_path
+    else:
+        mesh_json_path = None
 
 
 def get_names(file, tree_prefix):
