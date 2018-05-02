@@ -8,14 +8,39 @@ import setuptools
 
 PACKAGES = setuptools.find_packages(where='src')
 META_PATH = os.path.join('src', 'bio2bel_mesh', '__init__.py')
+KEYWORDS = ['Biological Expression Language', 'BEL', 'Systems Biology', 'Networks Biology', 'InterPro']
+CLASSIFIERS = [
+    'Development Status :: 4 - Beta',
+    'Environment :: Console',
+    'Intended Audience :: Developers',
+    'Intended Audience :: Science/Research',
+    'License :: OSI Approved :: MIT License',
+    'Operating System :: OS Independent',
+    'Programming Language :: Python',
+    'Programming Language :: Python :: 3.6',
+    'Topic :: Scientific/Engineering :: Bio-Informatics'
+]
 INSTALL_REQUIRES = [
+    'pybel>=0.11.1'
+    'bio2bel>=0.0.9',
+    'sqlalchemy',
     'click',
     'requests',
     'rdflib',
     'networkx',
-    'pybel',
-    'pybel-tools',
+    'tqdm',
 ]
+EXTRAS_REQUIRE = {
+    'web': ['flask', 'flask-admin'],
+}
+ENTRY_POINTS = {
+    'bio2bel': [
+        'mesh = bio2bel_mesh',
+    ],
+    'console_scripts': [
+        'bio2bel_mesh = bio2bel_mesh.cli:main',
+    ]
+}
 
 HERE = os.path.abspath(os.path.dirname(__file__))
 
@@ -56,10 +81,12 @@ if __name__ == '__main__':
         url=find_meta('url'),
         author=find_meta('author'),
         author_email=find_meta('email'),
-        maintainer='Charles Tapley Hoyt',
+        maintainer=find_meta('author'),
         maintainer_email=find_meta('email'),
         license=find_meta('license'),
         packages=PACKAGES,
         package_dir={'': 'src'},
         install_requires=INSTALL_REQUIRES,
+        extras_require=EXTRAS_REQUIRE,
+        entry_points=ENTRY_POINTS,
     )
