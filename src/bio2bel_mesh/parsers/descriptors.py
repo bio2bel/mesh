@@ -2,13 +2,15 @@
 
 """Parser for the MeSH descriptors."""
 
+import json
 import logging
+import os
 
 from tqdm import tqdm
 
 from bio2bel import make_downloader
 from .utils import parse_xml
-from ..constants import DESCRIPTOR_PATH, DESCRIPTOR_URL
+from ..constants import DESCRIPTOR_JSON_PATH, DESCRIPTOR_PATH, DESCRIPTOR_URL
 
 __all__ = [
     'download_descriptors',
@@ -30,66 +32,113 @@ def get_descriptors_root(path=None, cache=True, force_download=False):
     return parse_xml(path)
 
 
-def _get_descriptors(root):
-    log.info('extract mesh terms')
-    term_dicts = list()
+def _get_concept_terms(e):
+    """Gets all of the terms for a concept"""
+    rv = []
 
-    for descriptor in tqdm(root, desc='Descriptors'):
-        for concept in descriptor.findall('ConceptList/Concept'):
-            for term in concept.findall('TermList/Term'):
-                term_dict = {
-                    'DescriptorUI': descriptor.findtext('DescriptorUI'),
-                    'ConceptUI': concept.findtext('ConceptUI'),
-                    'TermUI': term.findtext('TermUI'),
-                    'TermName': term.findtext('String')
-                }
-                term_dict.update(concept.attrib)
-                term_dict.update(term.attrib)
-                term_dicts.append(term_dict)
+    for term in e.findall('TermList/Term'):
+        term_entry = {
+            'term_ui': term.findtext('TermUI'),
+            'name': term.findtext('String')
+        }
+        term_entry.update(term.attrib)
+        rv.append(term_entry)
 
-    return term_dicts
+    return rv
 
 
-def _get_terms(root):
-    log.info('parse mesh xml release')
+def _get_concept_relations(concept):
+    raise NotImplementedError
 
-    terms = [
-        {
-            'mesh_id': elem.findtext('DescriptorUI'),
-            'mesh_name': elem.findtext('DescriptorName/String'),
+
+def _get_descriptor_concepts(e):
+    rv = []
+
+    for concept in e.findall('ConceptList/Concept'):
+        concept_entry = {
+            'concept_ui': concept.findtext('ConceptUI'),
+            'name': concept.findtext('ConceptName/String'),
             'semantic_types': list({
                 x.text
-                for x in elem.findall('ConceptList/Concept/SemanticTypeList/SemanticType/SemanticTypeUI')
+                for x in concept.findall('SemanticTypeList/SemanticType/SemanticTypeUI')
             }),
-            'tree_numbers': [
-                x.text
-                for x in elem.findall('TreeNumberList/TreeNumber')
-            ]
+            'terms': _get_concept_terms(concept),
+            # TODO handle ConceptRelationList
         }
-        for elem in tqdm(root, desc='Terms')
-    ]
+        concept_entry.update(concept.attrib)
+        rv.append(concept_entry)
 
-    # Determine ontology parents
-    tree_number_to_id = {
-        tn: term['mesh_id']
-        for term in terms for tn in term['tree_numbers']
+    return rv
+
+
+def _get_descriptor_qualifiers(descriptor):
+    rv = []
+
+    for qualifier in descriptor.findall('AllowableQualifiersList/AllowableQualifier/QualifierReferredTo'):
+        qualifier_entry = {
+            'qualifier_ui': qualifier.findtext('QualifierUI'),
+            'name': qualifier.findtext('QualifierName/String'),
+        }
+        rv.append(qualifier_entry)
+
+    return rv
+
+
+def _get_descriptor(e):
+    descriptor_entry = {
+        'descriptor_ui': e.findtext('DescriptorUI'),
+        'name': e.findtext('DescriptorName/String'),
+        'tree_numbers': list({
+            x.text
+            for x in e.findall('TreeNumberList/TreeNumber')
+        }),
+        'concepts': _get_descriptor_concepts(e),
+        # TODO handle AllowableQualifiersList
     }
 
-    for term in terms:
-        parents = set()
-        for tree_number in term['tree_numbers']:
+    return descriptor_entry
+
+
+def _get_descriptors(root):
+    log.info('extract MeSH descriptors, concepts, and terms')
+
+    rv = [
+        _get_descriptor(descriptor)
+        for descriptor in tqdm(root, desc='Descriptors')
+    ]
+
+    # cache tree numbers
+    tree_number_to_descriptor_ui = {
+        tree_number: descriptor['descriptor_ui']
+        for descriptor in rv
+        for tree_number in descriptor['tree_numbers']
+    }
+
+    # add in parents to each descriptor based on their tree numbers
+    for descriptor in rv:
+        parents_descriptor_uis = set()
+        for tree_number in descriptor['tree_numbers']:
             try:
                 parent_tn, self_tn = tree_number.rsplit('.', 1)
-                parents.add(tree_number_to_id[parent_tn])
+                parent_descriptor_ui = tree_number_to_descriptor_ui[parent_tn]
+                parents_descriptor_uis.add(parent_descriptor_ui)
             except ValueError:
                 pass
-        term['parents'] = list(parents)
-
-    return terms
+        descriptor['parents'] = list(parents_descriptor_uis)
+    return rv
 
 
 def get_descriptors(path=None, cache=True, force_download=False):
-    root = get_descriptors_root(path=path, cache=cache, force_download=force_download)
+    if os.path.exists(DESCRIPTOR_JSON_PATH):
+        log.info('loading cached json')
+        with open(DESCRIPTOR_JSON_PATH) as file:
+            return json.load(file)
 
-    d = _get_descriptors(root)
-    t = _get_terms(root)
+    root = get_descriptors_root(path=path, cache=cache, force_download=force_download)
+    descriptors_json = _get_descriptors(root)
+
+    with open(DESCRIPTOR_JSON_PATH, 'w') as file:
+        log.info('caching json')
+        json.dump(descriptors_json, file, indent=2)
+
+    return descriptors_json
