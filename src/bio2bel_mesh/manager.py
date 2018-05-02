@@ -11,7 +11,7 @@ from tqdm import tqdm
 from bio2bel import AbstractManager
 from .constants import MODULE_NAME
 from .models import Base, Concept, Descriptor, Term, Tree
-from .parsers import get_descriptors
+from .parsers import get_descriptors, get_supplementary_records
 
 __all__ = [
     'Manager',
@@ -75,6 +75,10 @@ class Manager(AbstractManager):
             descriptors=self.count_descriptors()
         )
 
+    def _populate_supplement(self):
+        log.info('getting supplementary xml')
+        get_supplementary_records()
+
     def _populate_descriptors(self):
         log.info('loading database')
         ui_descriptor = {d.descriptor_ui: d for d in self.list_descriptors()}
@@ -127,17 +131,3 @@ class Manager(AbstractManager):
 
     def populate(self):
         self._populate_descriptors()
-
-    @classmethod
-    def get_cli(cls):
-        main = super().get_cli()
-        import click
-        import json
-        @main.command()
-        @click.option('-o', '--output', type=click.File('w'))
-        def download(output):
-            """Download and mock-parse everything"""
-            descriptors = get_descriptors()
-            json.dump(descriptors, output, indent=2)
-
-        return main

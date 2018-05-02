@@ -13,3 +13,4 @@ DESCRIPTOR_JSON_PATH = os.path.join(DATA_DIR, 'desc2017.json')
 
 SUPPLEMENT_URL = 'ftp://nlmpubs.nlm.nih.gov/online/mesh/.xmlmesh/supp2017.gz'
 SUPPLEMENT_PATH = os.path.join(DATA_DIR, 'supp2017.gz')
+SUPPLEMENT_JSON_PATH = os.path.join(DATA_DIR, 'supp2017.json')

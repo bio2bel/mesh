@@ -13,7 +13,6 @@ Base = declarative_base()
 DESCRIPTOR_TABLE_NAME = f'{MODULE_NAME}_descriptor'
 CONCEPT_TABLE_NAME = f'{MODULE_NAME}_concept'
 TERM_TABLE_NAME = f'{MODULE_NAME}_term'
-# PERMUTED_TERM_TABLE_NAME = f'{MODULE_NAME}_permutedTerm'
 TREE_TABLE_NAME = f'{MODULE_NAME}_tree'
 
 
@@ -76,7 +75,7 @@ class Tree(Base):
     name = Column(String(255), nullable=False, unique=True, index=True, doc='MeSH tree number')
 
     descriptor_id = Column(Integer, ForeignKey(f'{DESCRIPTOR_TABLE_NAME}.id'), nullable=False)
-    descriptor = relationship(Descriptor, backref=backref('trees', lazy='dynamic'))
+    descriptor = relationship(Descriptor)
 
     def __str__(self):
         return self.name

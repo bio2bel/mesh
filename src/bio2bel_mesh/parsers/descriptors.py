@@ -9,7 +9,7 @@ import os
 from tqdm import tqdm
 
 from bio2bel import make_downloader
-from .utils import parse_xml
+from .utils import get_concepts, parse_xml
 from ..constants import DESCRIPTOR_JSON_PATH, DESCRIPTOR_PATH, DESCRIPTOR_URL
 
 __all__ = [
@@ -30,45 +30,6 @@ def get_descriptors_root(path=None, cache=True, force_download=False):
         path = download_descriptors(force_download=force_download)
 
     return parse_xml(path)
-
-
-def _get_concept_terms(e):
-    """Gets all of the terms for a concept"""
-    rv = []
-
-    for term in e.findall('TermList/Term'):
-        term_entry = {
-            'term_ui': term.findtext('TermUI'),
-            'name': term.findtext('String')
-        }
-        term_entry.update(term.attrib)
-        rv.append(term_entry)
-
-    return rv
-
-
-def _get_concept_relations(concept):
-    raise NotImplementedError
-
-
-def _get_descriptor_concepts(e):
-    rv = []
-
-    for concept in e.findall('ConceptList/Concept'):
-        concept_entry = {
-            'concept_ui': concept.findtext('ConceptUI'),
-            'name': concept.findtext('ConceptName/String'),
-            'semantic_types': list({
-                x.text
-                for x in concept.findall('SemanticTypeList/SemanticType/SemanticTypeUI')
-            }),
-            'terms': _get_concept_terms(concept),
-            # TODO handle ConceptRelationList
-        }
-        concept_entry.update(concept.attrib)
-        rv.append(concept_entry)
-
-    return rv
 
 
 def _get_descriptor_qualifiers(descriptor):
@@ -92,7 +53,7 @@ def _get_descriptor(e):
             x.text
             for x in e.findall('TreeNumberList/TreeNumber')
         }),
-        'concepts': _get_descriptor_concepts(e),
+        'concepts': get_concepts(e),
         # TODO handle AllowableQualifiersList
     }
 
@@ -130,15 +91,15 @@ def _get_descriptors(root):
 
 def get_descriptors(path=None, cache=True, force_download=False):
     if os.path.exists(DESCRIPTOR_JSON_PATH):
-        log.info('loading cached json')
+        log.info('loading cached descriptors json')
         with open(DESCRIPTOR_JSON_PATH) as file:
             return json.load(file)
 
     root = get_descriptors_root(path=path, cache=cache, force_download=force_download)
-    descriptors_json = _get_descriptors(root)
+    rv = _get_descriptors(root)
 
     with open(DESCRIPTOR_JSON_PATH, 'w') as file:
-        log.info('caching json')
-        json.dump(descriptors_json, file, indent=2)
+        log.info('caching descriptors json')
+        json.dump(rv, file, indent=2)
 
-    return descriptors_json
+    return rv
