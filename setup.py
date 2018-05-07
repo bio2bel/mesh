@@ -8,7 +8,7 @@ import setuptools
 
 PACKAGES = setuptools.find_packages(where='src')
 META_PATH = os.path.join('src', 'bio2bel_mesh', '__init__.py')
-KEYWORDS = ['Biological Expression Language', 'BEL', 'Systems Biology', 'Networks Biology', 'InterPro']
+KEYWORDS = ['Biological Expression Language', 'BEL', 'Systems Biology', 'Networks Biology', 'MeSH']
 CLASSIFIERS = [
     'Development Status :: 4 - Beta',
     'Environment :: Console',
@@ -81,9 +81,11 @@ if __name__ == '__main__':
         url=find_meta('url'),
         author=find_meta('author'),
         author_email=find_meta('email'),
-        maintainer=find_meta('author'),
+        maintainer='Charles Tapley Hoyt',
         maintainer_email=find_meta('email'),
         license=find_meta('license'),
+        classifiers=CLASSIFIERS,
+        keywords=KEYWORDS,
         packages=PACKAGES,
         package_dir={'': 'src'},
         install_requires=INSTALL_REQUIRES,
