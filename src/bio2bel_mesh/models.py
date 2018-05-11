@@ -75,7 +75,7 @@ class Tree(Base):
     name = Column(String(255), nullable=False, unique=True, index=True, doc='MeSH tree number')
 
     descriptor_id = Column(Integer, ForeignKey(f'{DESCRIPTOR_TABLE_NAME}.id'), nullable=False)
-    descriptor = relationship(Descriptor)
+    descriptor = relationship(Descriptor, backref=backref('trees'))
 
     def __str__(self):
         return self.name
