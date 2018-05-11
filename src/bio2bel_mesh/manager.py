@@ -32,7 +32,7 @@ class Manager(AbstractManager):
 
     def is_populated(self) -> bool:
         """Check if the database is already populated."""
-        raise 0 < self.count_terms()
+        return 0 < self.count_terms()
 
     def count_descriptors(self) -> int:
         """Count the number of descriptors in the database."""
