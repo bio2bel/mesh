@@ -67,6 +67,9 @@ class Manager(AbstractManager):
     def get_term_by_ui(self, ui) -> Optional[Term]:
         return self.session.query(Term.term_ui == ui).one_or_none()
 
+    def get_term_by_name(self, name) -> Optional[Term]:
+        return self.session.query(Term).filter(Term.name == name).one_or_none()
+
     def summarize(self) -> Mapping[str, int]:
         """Summarize the database."""
         return dict(

@@ -66,6 +66,16 @@ class Term(Base):
     def __str__(self):
         return self.name
 
+    def to_json(self):
+        return {
+            'descriptor_ui': self.concept.descriptor.descriptor_ui,
+            'descriptor_name': self.concept.descriptor.name,
+            'concept_ui': self.concept.concept_ui,
+            'concept_name': self.concept.name,
+            'term_ui': self.term_ui,
+            'term_name': self.name
+        }
+
 
 class Tree(Base):
     __tablename__ = TREE_TABLE_NAME

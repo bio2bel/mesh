@@ -45,7 +45,7 @@ def _get_descriptor_qualifiers(descriptor):
     return rv
 
 
-def _get_descriptor(e):
+def _get_descriptor(e): # TODO add ScopeNote as description
     descriptor_entry = {
         'descriptor_ui': e.findtext('DescriptorUI'),
         'name': e.findtext('DescriptorName/String'),
