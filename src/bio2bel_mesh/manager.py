@@ -4,8 +4,6 @@
 
 import logging
 import time
-from typing import List, Mapping, Optional
-
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
@@ -38,40 +36,72 @@ class Manager(AbstractManager):
         """Count the number of descriptors in the database."""
         return self._count_model(Descriptor)
 
-    def list_descriptors(self) -> List[Descriptor]:
-        """List the descriptors from the database."""
+    def list_descriptors(self):
+        """List the descriptors from the database.
+
+        :rtype: list[Descriptor]
+        """
         return self._list_model(Descriptor)
 
-    def get_descriptor_by_ui(self, ui) -> Optional[Descriptor]:
+    def get_descriptor_by_ui(self, ui):
+        """Get a descriptor by its UI.
+
+        :param str ui:
+        :rtype: Optional[Descriptor]
+        """
         return self.session.query(Descriptor.descriptor_ui == ui).one_or_none()
 
     def count_concepts(self) -> int:
         """Count the number of concepts in the database."""
         return self._count_model(Concept)
 
-    def list_concepts(self) -> List[Concept]:
-        """List the concepts from the database."""
+    def list_concepts(self):
+        """List the concepts from the database.
+
+        :rtype: list[Concept]
+        """
         return self._list_model(Concept)
 
-    def get_concept_by_ui(self, ui) -> Optional[Concept]:
+    def get_concept_by_ui(self, ui):
+        """Get a concept by its UI.
+
+        :param str ui:
+        :rtype: Optional[Concept]
+        """
         return self.session.query(Concept.concept_ui == ui).one_or_none()
 
     def count_terms(self) -> int:
         """Count the number of terms in the database."""
         return self._count_model(Term)
 
-    def list_terms(self) -> List[Term]:
-        """List the terms from the database."""
+    def list_terms(self):
+        """List the terms from the database.
+
+        :rtype: list[Term]
+        """
         return self._list_model(Term)
 
-    def get_term_by_ui(self, ui) -> Optional[Term]:
+    def get_term_by_ui(self, ui):
+        """Get a term by its UI.
+
+        :param str ui:
+        :return: Optional[Term]
+        """
         return self.session.query(Term.term_ui == ui).one_or_none()
 
-    def get_term_by_name(self, name) -> Optional[Term]:
+    def get_term_by_name(self, name):
+        """Get a term by its name.
+
+        :type name: str
+        :rtype: Optional[Term]
+        """
         return self.session.query(Term).filter(Term.name == name).one_or_none()
 
-    def summarize(self) -> Mapping[str, int]:
-        """Summarize the database."""
+    def summarize(self):
+        """Summarize the database.
+
+        :rtype: dict[str,int]
+        """
         return dict(
             terms=self.count_terms(),
             concepts=self.count_concepts(),
@@ -81,6 +111,7 @@ class Manager(AbstractManager):
     def _populate_supplement(self):
         log.info('getting supplementary xml')
         get_supplementary_records()
+        log.error('_populate_supplement needs to be implemented!')
 
     def _populate_descriptors(self):
         log.info('loading database')
