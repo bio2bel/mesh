@@ -2,6 +2,7 @@
 
 """SQLAlchemy database models."""
 
+import itertools as itt
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import backref, relationship
@@ -28,6 +29,38 @@ class Descriptor(Base):
 
     def __str__(self):
         return self.name
+
+    @property
+    def is_pathology(self):
+        return self._has_tree_prefixes(['C', 'F'])
+
+    @property
+    def is_process(self):
+        return self._has_tree_prefix('G') and self._not_has_tree_prefixes(['G01', 'G15', 'G17'])
+
+    @property
+    def is_chemical(self):
+        return self._has_tree_prefix('D')
+
+    def _not_has_tree_prefixes(self, prefixes):
+        return all(
+            prefix not in tree.name
+            for prefix, tree in itt.product(prefixes, self.trees)
+        )
+
+    def _has_tree_prefixes(self, prefixes) -> bool:
+        """Check if any of the tree entries have any of the given prefixes."""
+        return any(
+            prefix in tree.name
+            for prefix, tree in itt.product(prefixes, self.trees)
+        )
+
+    def _has_tree_prefix(self, prefix: str) -> bool:
+        """Check if any of the tree entries for this descriptor have the given prefix."""
+        return any(
+            prefix in tree.name
+            for tree in self.trees
+        )
 
 
 class Concept(Base):

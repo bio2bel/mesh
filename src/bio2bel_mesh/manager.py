@@ -3,10 +3,24 @@
 """Bio2BEL MeSH manager."""
 
 import logging
+from collections import Counter
+from typing import Iterable, List, Mapping, Optional, Tuple
+
+import networkx as nx
 import time
+from pybel import BELGraph
+from pybel.constants import (
+    ABUNDANCE, BIOPROCESS, COMPLEX, FUNCTION, FUSION, GENE, IDENTIFIER, MEMBERS, MIRNA, NAME, NAMESPACE, PATHOLOGY,
+    PROTEIN, REACTANTS, RNA, VARIANTS,
+)
+from pybel.dsl.nodes import abundance, bioprocess, gene, mirna, named_complex_abundance, pathology, protein, rna
+from pybel.manager.models import Namespace, NamespaceEntry
+from sqlalchemy.ext.declarative import DeclarativeMeta
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
+from bio2bel.manager.flask_manager import FlaskMixin
+from bio2bel.manager.namespace_manager import BELNamespaceManagerMixin
 from .constants import MODULE_NAME
 from .models import Base, Concept, Descriptor, Term, Tree
 from .parsers import get_descriptors, get_supplementary_records
@@ -17,15 +31,33 @@ __all__ = [
 
 log = logging.getLogger(__name__)
 
+_func_dsl = {
+    PROTEIN: protein,
+    RNA: rna,
+    MIRNA: mirna,
+    GENE: gene,
+    PATHOLOGY: pathology,
+    BIOPROCESS: bioprocess,
+    COMPLEX: named_complex_abundance,
+    ABUNDANCE: abundance,
+}
 
-class Manager(AbstractManager):
+
+class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
     """Bio2BEL MeSH manager."""
 
     module_name = MODULE_NAME
     flask_admin_models = [Descriptor, Concept, Term, Tree]
 
+    namespace_model = Descriptor
+    identifiers_recommended = 'MeSH'
+    identifiers_pattern = '^(C|D)\d{6}$'
+    identifiers_miriam = 'MIR:00000560'
+    identifiers_namespace = 'mesh'
+    identifiers_url = 'http://identifiers.org/mesh/'
+
     @property
-    def _base(self):
+    def _base(self) -> DeclarativeMeta:
         return Base
 
     def is_populated(self) -> bool:
@@ -36,77 +68,57 @@ class Manager(AbstractManager):
         """Count the number of descriptors in the database."""
         return self._count_model(Descriptor)
 
-    def list_descriptors(self):
-        """List the descriptors from the database.
-
-        :rtype: list[Descriptor]
-        """
+    def list_descriptors(self) -> List[Descriptor]:
+        """List the descriptors from the database."""
         return self._list_model(Descriptor)
 
-    def get_descriptor_by_ui(self, ui):
-        """Get a descriptor by its UI.
-
-        :param str ui:
-        :rtype: Optional[Descriptor]
-        """
+    def get_descriptor_by_ui(self, ui: str) -> Optional[Descriptor]:
+        """Get a descriptor by its UI, if it exists."""
         return self.session.query(Descriptor.descriptor_ui == ui).one_or_none()
+
+    def get_descriptor_by_name(self, name: str) -> Optional[Descriptor]:
+        """Get a descriptor by its name, if it exists."""
+        return self.session.query(Descriptor.name == name).one_or_none()
 
     def count_concepts(self) -> int:
         """Count the number of concepts in the database."""
         return self._count_model(Concept)
 
-    def list_concepts(self):
-        """List the concepts from the database.
-
-        :rtype: list[Concept]
-        """
+    def list_concepts(self) -> List[Concept]:
+        """List the concepts from the database."""
         return self._list_model(Concept)
 
-    def get_concept_by_ui(self, ui):
-        """Get a concept by its UI.
-
-        :param str ui:
-        :rtype: Optional[Concept]
-        """
+    def get_concept_by_ui(self, ui) -> Optional[Concept]:
+        """Get a concept by its UI, if it exists."""
         return self.session.query(Concept.concept_ui == ui).one_or_none()
 
     def count_terms(self) -> int:
         """Count the number of terms in the database."""
         return self._count_model(Term)
 
-    def list_terms(self):
-        """List the terms from the database.
-
-        :rtype: list[Term]
-        """
+    def list_terms(self) -> List[Term]:
+        """List the terms from the database."""
         return self._list_model(Term)
 
-    def get_term_by_ui(self, ui):
-        """Get a term by its UI.
-
-        :param str ui:
-        :return: Optional[Term]
-        """
+    def get_term_by_ui(self, ui: str) -> Optional[Term]:
+        """Get a term by its UI, if it exists."""
         return self.session.query(Term.term_ui == ui).one_or_none()
 
-    def get_term_by_name(self, name):
-        """Get a term by its name.
-
-        :type name: str
-        :rtype: Optional[Term]
-        """
+    def get_term_by_name(self, name: str) -> Optional[Term]:
+        """Get a term by its name, if it exists."""
         return self.session.query(Term).filter(Term.name == name).one_or_none()
 
-    def summarize(self):
-        """Summarize the database.
-
-        :rtype: dict[str,int]
-        """
+    def summarize(self) -> Mapping[str, int]:
+        """Summarize the database."""
         return dict(
             terms=self.count_terms(),
             concepts=self.count_concepts(),
             descriptors=self.count_descriptors()
         )
+
+    def populate(self) -> None:
+        """Populate the database."""
+        self._populate_descriptors()
 
     def _populate_supplement(self):
         log.info('getting supplementary xml')
@@ -163,5 +175,70 @@ class Manager(AbstractManager):
         self.session.commit()
         log.info('committed models in %.2f seconds', time.time() - t)
 
-    def populate(self):
-        self._populate_descriptors()
+    @staticmethod
+    def _get_identifier(model: Descriptor) -> str:
+        return model.descriptor_ui
+
+    def _create_namespace_entry_from_model(self, model: Descriptor, namespace: Namespace) -> NamespaceEntry:
+        if model.is_pathology:
+            encoding = 'O'
+        elif model.is_process:
+            encoding = 'B'
+        elif model.is_chemical:
+            encoding = 'A'
+        else:
+            encoding = None  # no idea. don't validate
+
+        return NamespaceEntry(
+            namespace=namespace,
+            name=model.name,
+            identifier=model.descriptor_ui,
+            encoding=encoding,
+        )
+
+    def look_up_node(self, data) -> Optional[Descriptor]:
+        namespace = data.get(NAMESPACE)
+        if namespace is None or not namespace.lower().startswith('mesh'):
+            return
+
+        name, identifier = data.get(NAME), data.get(IDENTIFIER)
+
+        if identifier:
+            return self.get_descriptor_by_ui(identifier)
+
+        term = self.get_term_by_name(name)
+        if term:
+            return term.concept.descriptor
+
+    def _iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[tuple, dict, Descriptor]]:
+        for node_tuple, node_data in graph.nodes(data=True):
+            descriptor = self.look_up_node(node_data)
+            if descriptor is not None:
+                yield node_tuple, node_data, descriptor
+
+    def normalize_terms(self, graph: BELGraph) -> Counter:
+        """Add identifiers to all MeSH terms and return a counter of the namespaces fixed."""
+        self.add_namespace_to_graph(graph)
+
+        mapping = {}
+        fixed_namespaces = []
+
+        for node_tuple, node_data, term in self._iter_nodes(graph):
+            if any(x in node_data for x in (VARIANTS, MEMBERS, REACTANTS, FUSION)):
+                log.info('skipping: %s', node_tuple)
+                continue
+
+            fixed_namespaces.append(node_data[NAMESPACE])
+            dsl = _func_dsl[node_data[FUNCTION]]
+
+            node = dsl(
+                namespace='mesh',
+                name=term.name,
+                identifier=term.descriptor_ui,
+            )
+            graph.node[node_tuple] = node
+            mapping[node_tuple] = node.as_tuple()
+
+        nx.relabel_nodes(graph, mapping, copy=False)
+
+        return Counter(fixed_namespaces)
