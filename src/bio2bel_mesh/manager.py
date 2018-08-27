@@ -8,19 +8,16 @@ from typing import Iterable, List, Mapping, Optional, Tuple
 
 import networkx as nx
 import time
-from pybel import BELGraph
-from pybel.constants import (
-    ABUNDANCE, BIOPROCESS, COMPLEX, FUNCTION, FUSION, GENE, IDENTIFIER, MEMBERS, MIRNA, NAME, NAMESPACE, PATHOLOGY,
-    PROTEIN, REACTANTS, RNA, VARIANTS,
-)
-from pybel.dsl.nodes import abundance, bioprocess, gene, mirna, named_complex_abundance, pathology, protein, rna
-from pybel.manager.models import Namespace, NamespaceEntry
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
 from bio2bel.manager.flask_manager import FlaskMixin
 from bio2bel.manager.namespace_manager import BELNamespaceManagerMixin
+from pybel import BELGraph
+from pybel.constants import FUNCTION, FUSION, IDENTIFIER, MEMBERS, NAME, NAMESPACE, REACTANTS, VARIANTS
+from pybel.dsl import FUNC_TO_DSL
+from pybel.manager.models import Namespace, NamespaceEntry
 from .constants import MODULE_NAME
 from .models import Base, Concept, Descriptor, Term, Tree
 from .parsers import get_descriptors, get_supplementary_records
@@ -30,17 +27,6 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
-
-_func_dsl = {
-    PROTEIN: protein,
-    RNA: rna,
-    MIRNA: mirna,
-    GENE: gene,
-    PATHOLOGY: pathology,
-    BIOPROCESS: bioprocess,
-    COMPLEX: named_complex_abundance,
-    ABUNDANCE: abundance,
-}
 
 
 class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
@@ -120,12 +106,12 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         """Populate the database."""
         self._populate_descriptors()
 
-    def _populate_supplement(self):
+    def _populate_supplement(self) -> None:
         log.info('getting supplementary xml')
         get_supplementary_records()
         log.error('_populate_supplement needs to be implemented!')
 
-    def _populate_descriptors(self):
+    def _populate_descriptors(self) -> None:
         log.info('loading database')
         ui_descriptor = {d.descriptor_ui: d for d in self.list_descriptors()}
         ui_concept = {d.concept_ui: d for d in self.list_concepts()}
@@ -229,7 +215,7 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
                 continue
 
             fixed_namespaces.append(node_data[NAMESPACE])
-            dsl = _func_dsl[node_data[FUNCTION]]
+            dsl = FUNC_TO_DSL[node_data[FUNCTION]]
 
             node = dsl(
                 namespace='mesh',
