@@ -15,6 +15,8 @@ from bio2bel import AbstractManager
 from bio2bel.manager.flask_manager import FlaskMixin
 from bio2bel.manager.namespace_manager import BELNamespaceManagerMixin
 from pybel import BELGraph
+from pybel.dsl import BaseEntity
+from pybel.struct.utils import relabel_inplace
 from pybel.constants import FUNCTION, FUSION, IDENTIFIER, MEMBERS, NAME, NAMESPACE, REACTANTS, VARIANTS
 from pybel.dsl import FUNC_TO_DSL
 from pybel.manager.models import Namespace, NamespaceEntry
@@ -196,11 +198,11 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         if term:
             return term.concept.descriptor
 
-    def _iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[tuple, dict, Descriptor]]:
-        for node_tuple, node_data in graph.nodes(data=True):
+    def iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[BaseEntity, Descriptor]]:
+        for _, node_data in graph.nodes(data=True):
             descriptor = self.look_up_node(node_data)
             if descriptor is not None:
-                yield node_tuple, node_data, descriptor
+                yield node_data, descriptor
 
     def normalize_terms(self, graph: BELGraph) -> Counter:
         """Add identifiers to all MeSH terms and return a counter of the namespaces fixed."""
@@ -209,7 +211,8 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         mapping = {}
         fixed_namespaces = []
 
-        for node_tuple, node_data, term in self._iter_nodes(graph):
+        for node_data, term in self.iter_nodes(graph):
+            node_tuple = node_data.as_tuple()
             if any(x in node_data for x in (VARIANTS, MEMBERS, REACTANTS, FUSION)):
                 log.info('skipping: %s', node_tuple)
                 continue
@@ -222,9 +225,9 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
                 name=term.name,
                 identifier=term.descriptor_ui,
             )
-            graph.node[node_tuple] = node
+            graph._node[node_tuple] = node
             mapping[node_tuple] = node.as_tuple()
 
-        nx.relabel_nodes(graph, mapping, copy=False)
+        relabel_inplace(graph, mapping)
 
         return Counter(fixed_namespaces)

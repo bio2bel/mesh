@@ -15,6 +15,23 @@ def manage():
 
 
 @manage.group()
+def descriptors():
+    """Manage descriptors."""
+
+
+@descriptors.command()
+@click.argument('ui')
+@click.pass_obj
+def get(manager, ui):
+    """Look up a descriptor in the database."""
+    model = manager.get_descriptor_by_ui(ui)
+
+    if model is not None:
+        for k, v in model.to_json().items():
+            click.echo(f'{k}: {v}')
+
+
+@manage.group()
 def terms():
     """Manage terms."""
 

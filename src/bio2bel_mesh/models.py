@@ -1,15 +1,15 @@
 # -*- coding: utf-8 -*-
 
-"""SQLAlchemy database models."""
+"""SQLAlchemy database models for Bio2BEL MeSH."""
 
 import itertools as itt
 from sqlalchemy import Column, ForeignKey, Integer, String
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
 
 from .constants import MODULE_NAME
 
-Base = declarative_base()
+Base: DeclarativeMeta = declarative_base()
 
 DESCRIPTOR_TABLE_NAME = f'{MODULE_NAME}_descriptor'
 CONCEPT_TABLE_NAME = f'{MODULE_NAME}_concept'
@@ -18,6 +18,8 @@ TREE_TABLE_NAME = f'{MODULE_NAME}_tree'
 
 
 class Descriptor(Base):
+    """MeSH Descriptor."""
+
     __tablename__ = DESCRIPTOR_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -31,18 +33,19 @@ class Descriptor(Base):
         return self.name
 
     @property
-    def is_pathology(self):
+    def is_pathology(self) -> bool:
+        """Is this term a pathology/phenotype?"""
         return self._has_tree_prefixes(['C', 'F'])
 
     @property
-    def is_process(self):
+    def is_process(self) -> bool:
         return self._has_tree_prefix('G') and self._not_has_tree_prefixes(['G01', 'G15', 'G17'])
 
     @property
-    def is_chemical(self):
+    def is_chemical(self) -> bool:
         return self._has_tree_prefix('D')
 
-    def _not_has_tree_prefixes(self, prefixes):
+    def _not_has_tree_prefixes(self, prefixes) -> bool:
         return all(
             prefix not in tree.name
             for prefix, tree in itt.product(prefixes, self.trees)
@@ -64,6 +67,8 @@ class Descriptor(Base):
 
 
 class Concept(Base):
+    """MeSH Concept."""
+
     __tablename__ = CONCEPT_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -80,6 +85,8 @@ class Concept(Base):
 
 
 class Term(Base):
+    """MeSH Term."""
+
     __tablename__ = TERM_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
@@ -111,6 +118,8 @@ class Term(Base):
 
 
 class Tree(Base):
+    """MeSH Tree."""
+
     __tablename__ = TREE_TABLE_NAME
 
     id = Column(Integer, primary_key=True)
