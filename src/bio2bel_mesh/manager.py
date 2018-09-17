@@ -6,8 +6,8 @@ import logging
 from collections import Counter
 from typing import Iterable, List, Mapping, Optional, Tuple
 
-import networkx as nx
 import time
+from networkx import relabel_nodes
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from tqdm import tqdm
 
@@ -15,10 +15,8 @@ from bio2bel import AbstractManager
 from bio2bel.manager.flask_manager import FlaskMixin
 from bio2bel.manager.namespace_manager import BELNamespaceManagerMixin
 from pybel import BELGraph
-from pybel.dsl import BaseEntity
-from pybel.struct.utils import relabel_inplace
 from pybel.constants import FUNCTION, FUSION, IDENTIFIER, MEMBERS, NAME, NAMESPACE, REACTANTS, VARIANTS
-from pybel.dsl import FUNC_TO_DSL
+from pybel.dsl import BaseEntity, FUNC_TO_DSL
 from pybel.manager.models import Namespace, NamespaceEntry
 from .constants import MODULE_NAME
 from .models import Base, Concept, Descriptor, Term, Tree
@@ -228,6 +226,6 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             graph._node[node_tuple] = node
             mapping[node_tuple] = node.as_tuple()
 
-        relabel_inplace(graph, mapping)
+        relabel_nodes(graph, mapping, copy=False)
 
         return Counter(fixed_namespaces)
