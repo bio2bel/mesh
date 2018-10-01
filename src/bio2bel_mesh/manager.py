@@ -3,10 +3,10 @@
 """Manager for Bio2BEL MeSH."""
 
 import logging
+import time
 from collections import Counter
 from typing import Iterable, List, Mapping, Optional, Tuple
 
-import time
 from networkx import relabel_nodes
 from sqlalchemy.ext.declarative import DeclarativeMeta
 from tqdm import tqdm
@@ -183,6 +183,7 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         )
 
     def look_up_node(self, node: BaseEntity) -> Optional[Descriptor]:
+        """Look up a descriptor based on a PyBEL node."""
         namespace = node.get(NAMESPACE)
         if namespace is None or not namespace.lower().startswith('mesh'):
             return
@@ -197,6 +198,7 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             return term.concept.descriptor
 
     def iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[BaseEntity, Descriptor]]:
+        """Iterate over nodes in a BEL graph that can be normalized to MeSH Descriptors."""
         for node in graph:
             descriptor = self.look_up_node(node)
             if descriptor is not None:

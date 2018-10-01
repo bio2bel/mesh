@@ -24,9 +24,8 @@ log = logging.getLogger(__name__)
 download_descriptors = make_downloader(DESCRIPTOR_URL, DESCRIPTOR_PATH)
 
 
-def get_descriptors_root(path=None, cache=True, force_download=False):
-    # Parse xml file as an ElementTree
-
+def get_descriptors_root(path: Optional[str] = None, cache: bool = True, force_download: bool = False):
+    """Parse xml file as an ElementTree."""
     if path is None and cache:
         path = download_descriptors(force_download=force_download)
 
@@ -91,6 +90,7 @@ def _get_descriptors(root):
 
 
 def get_descriptors(path: Optional[str] = None, cache=True, force_download=False):
+    """Get descriptors from a path."""
     if os.path.exists(DESCRIPTOR_JSON_PATH):
         log.info('loading cached descriptors json')
         with open(DESCRIPTOR_JSON_PATH) as file:

@@ -1,6 +1,8 @@
 # -*- coding: utf-8 -*-
 
-from .manager import Manager
+"""Bio2BEL MeSH."""
+
+from .manager import Manager  # noqa: F401s
 
 __version__ = '0.0.1-dev'
 

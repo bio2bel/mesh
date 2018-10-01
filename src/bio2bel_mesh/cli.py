@@ -11,7 +11,7 @@ main = Manager.get_cli()
 
 @main.group()
 def manage():
-    """Manage the database"""
+    """Manage the database."""
 
 
 @manage.group()

@@ -3,6 +3,8 @@
 """SQLAlchemy database models for Bio2BEL MeSH."""
 
 import itertools as itt
+from typing import Mapping
+
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
@@ -34,15 +36,17 @@ class Descriptor(Base):
 
     @property
     def is_pathology(self) -> bool:
-        """Is this term a pathology/phenotype?"""
+        """Check if this term is a pathology/phenotype."""
         return self._has_tree_prefixes(['C', 'F'])
 
     @property
     def is_process(self) -> bool:
+        """Check if this term is a process."""
         return self._has_tree_prefix('G') and self._not_has_tree_prefixes(['G01', 'G15', 'G17'])
 
     @property
     def is_chemical(self) -> bool:
+        """Check if this term is a chemical."""
         return self._has_tree_prefix('D')
 
     def _not_has_tree_prefixes(self, prefixes) -> bool:
@@ -106,7 +110,8 @@ class Term(Base):
     def __str__(self):
         return self.name
 
-    def to_json(self):
+    def to_json(self) -> Mapping:
+        """Return this term as a JSON object."""
         return {
             'descriptor_ui': self.concept.descriptor.descriptor_ui,
             'descriptor_name': self.concept.descriptor.name,

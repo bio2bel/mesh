@@ -1,4 +1,6 @@
 # -*- coding: utf-8 -*-
 
-from .descriptors import *
-from .supplement import *
+"""Parsers for Bio2BEL MeSH."""
+
+from .descriptors import *  # noqa: F401, F403
+from .supplement import *  # noqa: F401, F403

@@ -1,17 +1,20 @@
 # -*- coding: utf-8 -*-
 
+"""Utilities for Bio2BEL MeSH."""
+
 import json
 import logging
 import os
+from typing import Iterable, TextIO
 
 log = logging.getLogger(__name__)
 
-owncloud_base = os.environ.get('OWNCLOUD_BASE')
+OWNCLOUD_BASE = os.environ.get('OWNCLOUD_BASE')
 
 if 'MESH_JSON_PATH' in os.environ:
     mesh_json_path = os.environ['MESH_JSON_PATH']
-elif owncloud_base is not None:
-    putative_mesh_json_path = os.path.join(owncloud_base, 'mesh.json')
+elif OWNCLOUD_BASE is not None:
+    putative_mesh_json_path = os.path.join(OWNCLOUD_BASE, 'mesh.json')
 
     if os.path.exists(putative_mesh_json_path):
         mesh_json_path = putative_mesh_json_path
@@ -19,12 +22,11 @@ elif owncloud_base is not None:
         mesh_json_path = None
 
 
-def get_names(file, tree_prefix):
-    """Iterates over the names that match the given tree prefix
+def get_names(file: TextIO, tree_prefix: str) -> Iterable[str]:
+    """Iterate over the names that match the given tree prefix.
 
-    :param file file: The file containing Sumit-MeSH-JSON
-    :param str tree_prefix: The prefix to keep
-    :rtype: iter[str]
+    :param file: The file containing Sumit-MeSH-JSON
+    :param tree_prefix: The prefix to keep
     """
     d = json.load(file)
 

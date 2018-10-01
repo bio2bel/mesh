@@ -1,13 +1,15 @@
 # -*- coding: utf-8 -*-
 
+"""Old conversion utilities."""
+
 import pickle
 import types
+from typing import Optional
 
 import networkx as nx
-
 import rdflib
 import requests
-from rdflib import RDFS, Namespace
+from rdflib import Namespace, RDFS
 
 MESH_URL = 'ftp://ftp.nlm.nih.gov/online/mesh/mesh.nt.gz'
 MESH_OWL_IRI = 'http://ontologies.scai.fraunhofer.de/mesh.owl'
@@ -55,13 +57,12 @@ ns = {
 }
 
 
-def download(file_path):
-    """Downloads MeSH RDF dump
+def download(file_path: str):
+    """Download the MeSH RDF dump.
 
     See: http://stackoverflow.com/questions/16694907/how-to-download-large-file-in-python-with-requests-py
 
     :param file_path: output file path
-    :type file_path: str
     """
     r = requests.get(MESH_URL, stream=True)
 
@@ -73,14 +74,11 @@ def download(file_path):
                 f.write(chunk)
 
 
-def rdf_to_pickle(file_path, dump_path=None):
-    """Parses MeSH RDF dump with RDFLib and saves the resulting RDFLib store as a pickle object
+def rdf_to_pickle(file_path: str, dump_path: Optional[str] = None) -> Optional[rdflib.Graph]:
+    """Parse the MeSH RDF dump with RDFLib and saves the resulting RDFLib store as a pickle object.
 
     :param file_path: path to MeSH RDF dump
-    :type file_path: str
     :param dump_path: path where to save pickled RDFLib store
-    :type dump_path: str
-    :return:
     """
     store = rdflib.Graph()
     store.parse(file_path, format='nt')  # Takes about 28 minutes
@@ -92,12 +90,14 @@ def rdf_to_pickle(file_path, dump_path=None):
         pickle.dump(store, f)  # Takes about 3 minutes
 
 
-def load_store_from_pickle(dump_path):
+def load_store_from_pickle(dump_path: str):
+    """Load an RDFLib graph from a pickle file."""
     with open(dump_path, 'r+b') as f:
         return pickle.load(f)
 
 
-def mesh_to_nx(store):
+def mesh_to_nx(store: rdflib.Graph) -> nx.DiGraph:
+    """Serialize an RDFLib graph filled with MeSH to a NetworkX graph."""
     graph = nx.DiGraph()
     tree2term = {}
 
@@ -119,9 +119,10 @@ def mesh_to_nx(store):
     return graph
 
 
-def process_mesh(graph, iri=None):
+def process_mesh(graph: nx.DiGraph, iri: Optional[str] = None) -> 'owlready.Ontology':
+    """Process the MeSH NetworkX graph."""
     import owlready
-    
+
     assert nx.is_directed_acyclic_graph(graph)
 
     o = owlready.Ontology(iri if iri is not None else MESH_OWL_IRI)
