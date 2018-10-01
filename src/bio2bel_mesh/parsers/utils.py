@@ -19,7 +19,7 @@ def parse_xml(path):
 
 
 def get_terms(e):
-    """Gets all of the terms for a concept"""
+    """Get all of the terms for a concept."""
     rv = []
 
     for term in e.findall('TermList/Term'):

@@ -5,6 +5,7 @@
 import json
 import logging
 import os
+from typing import Optional
 
 from tqdm import tqdm
 
@@ -45,7 +46,7 @@ def _get_descriptor_qualifiers(descriptor):
     return rv
 
 
-def _get_descriptor(e): # TODO add ScopeNote as description
+def _get_descriptor(e):  # TODO add ScopeNote as description
     descriptor_entry = {
         'descriptor_ui': e.findtext('DescriptorUI'),
         'name': e.findtext('DescriptorName/String'),
@@ -89,7 +90,7 @@ def _get_descriptors(root):
     return rv
 
 
-def get_descriptors(path=None, cache=True, force_download=False):
+def get_descriptors(path: Optional[str] = None, cache=True, force_download=False):
     if os.path.exists(DESCRIPTOR_JSON_PATH):
         log.info('loading cached descriptors json')
         with open(DESCRIPTOR_JSON_PATH) as file:

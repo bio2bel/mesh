@@ -1,6 +1,6 @@
 # -*- coding: utf-8 -*-
 
-"""Bio2BEL MeSH manager."""
+"""Manager for Bio2BEL MeSH."""
 
 import logging
 from collections import Counter
@@ -102,23 +102,23 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             descriptors=self.count_descriptors()
         )
 
-    def populate(self) -> None:
+    def populate(self, descriptors_path: Optional[str] = None) -> None:
         """Populate the database."""
-        self._populate_descriptors()
+        self._populate_descriptors(path=descriptors_path)
 
     def _populate_supplement(self) -> None:
         log.info('getting supplementary xml')
         get_supplementary_records()
         log.error('_populate_supplement needs to be implemented!')
 
-    def _populate_descriptors(self) -> None:
+    def _populate_descriptors(self, path: Optional[str] = None) -> None:
         log.info('loading database')
         ui_descriptor = {d.descriptor_ui: d for d in self.list_descriptors()}
         ui_concept = {d.concept_ui: d for d in self.list_concepts()}
         ui_term = {d.term_ui: d for d in self.list_terms()}
 
         log.info('getting descriptor xml')
-        descriptors = get_descriptors()
+        descriptors = get_descriptors(path=path)
 
         log.info('building models')
         for descriptor_xml in tqdm(descriptors):
@@ -182,12 +182,12 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             encoding=encoding,
         )
 
-    def look_up_node(self, data) -> Optional[Descriptor]:
-        namespace = data.get(NAMESPACE)
+    def look_up_node(self, node: BaseEntity) -> Optional[Descriptor]:
+        namespace = node.get(NAMESPACE)
         if namespace is None or not namespace.lower().startswith('mesh'):
             return
 
-        name, identifier = data.get(NAME), data.get(IDENTIFIER)
+        name, identifier = node.get(NAME), node.get(IDENTIFIER)
 
         if identifier:
             return self.get_descriptor_by_ui(identifier)
@@ -197,10 +197,10 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             return term.concept.descriptor
 
     def iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[BaseEntity, Descriptor]]:
-        for _, node_data in graph.nodes(data=True):
-            descriptor = self.look_up_node(node_data)
+        for node in graph:
+            descriptor = self.look_up_node(node)
             if descriptor is not None:
-                yield node_data, descriptor
+                yield node, descriptor
 
     def normalize_terms(self, graph: BELGraph) -> Counter:
         """Add identifiers to all MeSH terms and return a counter of the namespaces fixed."""
@@ -209,22 +209,18 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         mapping = {}
         fixed_namespaces = []
 
-        for node_data, term in self.iter_nodes(graph):
-            node_tuple = node_data.as_tuple()
-            if any(x in node_data for x in (VARIANTS, MEMBERS, REACTANTS, FUSION)):
-                log.info('skipping: %s', node_tuple)
+        for node, descriptor in self.iter_nodes(graph):
+            if any(x in node for x in (VARIANTS, MEMBERS, REACTANTS, FUSION)):
+                log.info('skipping: %s', node)
                 continue
 
-            fixed_namespaces.append(node_data[NAMESPACE])
-            dsl = FUNC_TO_DSL[node_data[FUNCTION]]
-
-            node = dsl(
+            fixed_namespaces.append(node[NAMESPACE])
+            dsl = FUNC_TO_DSL[node[FUNCTION]]
+            mapping[node] = dsl(
                 namespace='mesh',
-                name=term.name,
-                identifier=term.descriptor_ui,
+                name=descriptor.name,
+                identifier=descriptor.descriptor_ui,
             )
-            graph._node[node_tuple] = node
-            mapping[node_tuple] = node.as_tuple()
 
         relabel_nodes(graph, mapping, copy=False)
 
