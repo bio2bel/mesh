@@ -20,7 +20,7 @@ from pybel.dsl import BaseEntity, FUNC_TO_DSL
 from pybel.manager.models import Namespace, NamespaceEntry
 from .constants import MODULE_NAME
 from .models import Base, Concept, Descriptor, Term, Tree
-from .parsers import get_descriptors, get_supplementary_records
+from .parsers import get_descriptor_records, get_supplementary_records
 
 __all__ = [
     'Manager',
@@ -102,26 +102,28 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
             descriptors=self.count_descriptors()
         )
 
-    def populate(self, descriptors_path: Optional[str] = None) -> None:
+    def populate(self, descriptors_path: Optional[str] = None, supplement_path: Optional[str] = None) -> None:
         """Populate the database."""
         self._populate_descriptors(path=descriptors_path)
-
-    def _populate_supplement(self) -> None:
-        log.info('getting supplementary xml')
-        get_supplementary_records()
-        log.error('_populate_supplement needs to be implemented!')
+        self._populate_supplement(path=supplement_path)
 
     def _populate_descriptors(self, path: Optional[str] = None) -> None:
-        log.info('loading database')
+        log.info('getting descriptor xml')
+        records = get_descriptor_records(path=path)
+        self._populate_records(records)
+
+    def _populate_supplement(self, path: Optional[str] = None) -> None:
+        log.info('getting supplementary xml')
+        records = get_supplementary_records()
+        self._populate_records(records)
+
+    def _populate_records(self, records):
         ui_descriptor = {d.descriptor_ui: d for d in self.list_descriptors()}
         ui_concept = {d.concept_ui: d for d in self.list_concepts()}
         ui_term = {d.term_ui: d for d in self.list_terms()}
 
-        log.info('getting descriptor xml')
-        descriptors = get_descriptors(path=path)
-
         log.info('building models')
-        for descriptor_xml in tqdm(descriptors):
+        for descriptor_xml in tqdm(records):
             descriptor_ui = descriptor_xml['descriptor_ui']
 
             descriptor = ui_descriptor.get(descriptor_ui)
@@ -131,7 +133,7 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
                     name=descriptor_xml['name'],
                     trees=[
                         Tree(name=name)
-                        for name in descriptor_xml['tree_numbers']
+                        for name in descriptor_xml.get('tree_numbers', [])
                     ],
                 )
                 self.session.add(descriptor)
@@ -162,23 +164,23 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         log.info('committed models in %.2f seconds', time.time() - t)
 
     @staticmethod
-    def _get_identifier(model: Descriptor) -> str:
-        return model.descriptor_ui
+    def _get_identifier(descriptor: Descriptor) -> str:
+        return descriptor.descriptor_ui
 
-    def _create_namespace_entry_from_model(self, model: Descriptor, namespace: Namespace) -> NamespaceEntry:
-        if model.is_pathology:
+    def _create_namespace_entry_from_model(self, descriptor: Descriptor, namespace: Namespace) -> NamespaceEntry:
+        if descriptor.is_pathology:
             encoding = 'O'
-        elif model.is_process:
+        elif descriptor.is_process:
             encoding = 'B'
-        elif model.is_chemical:
+        elif descriptor.is_chemical:
             encoding = 'A'
         else:
             encoding = None  # no idea. don't validate
 
         return NamespaceEntry(
             namespace=namespace,
-            name=model.name,
-            identifier=model.descriptor_ui,
+            name=descriptor.name,
+            identifier=descriptor.descriptor_ui,
             encoding=encoding,
         )
 

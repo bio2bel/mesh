@@ -13,7 +13,7 @@ YEAR = '2017'
 
 DESCRIPTOR_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/.xmlmesh/desc{YEAR}.gz'
 DESCRIPTOR_PATH = os.path.join(DATA_DIR, f'desc{YEAR}.gz')
-DESCRIPTOR_JSON_PATH = os.path.join(DATA_DIR, 'desc{YEAR}.json')
+DESCRIPTOR_JSON_PATH = os.path.join(DATA_DIR, f'desc{YEAR}.json')
 
 SUPPLEMENT_URL = f'ftp://nlmpubs.nlm.nih.gov/online/mesh/.xmlmesh/supp{YEAR}.gz'
 SUPPLEMENT_PATH = os.path.join(DATA_DIR, f'supp{YEAR}.gz')

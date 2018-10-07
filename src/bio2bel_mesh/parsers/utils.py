@@ -6,11 +6,14 @@ import gzip
 import logging
 import time
 import xml.etree.ElementTree as ET
+from typing import List, Mapping
+from xml.etree.ElementTree import Element
+
 
 log = logging.getLogger(__name__)
 
 
-def parse_xml(path: str):
+def parse_xml(path: str) -> Element:
     """Parse an XML file from a path to a GZIP file."""
     t = time.time()
     log.info('parsing xml from %s', path)
@@ -21,7 +24,7 @@ def parse_xml(path: str):
     return tree.getroot()
 
 
-def get_terms(e):
+def get_terms(element: Element) -> List[Mapping]:
     """Get all of the terms for a concept."""
     return [
         {
@@ -29,11 +32,11 @@ def get_terms(e):
             'name': term.findtext('String'),
             **term.attrib
         }
-        for term in e.findall('TermList/Term')
+        for term in element.findall('TermList/Term')
     ]
 
 
-def get_concepts(e):
+def get_concepts(element: Element) -> List[Mapping]:
     """Get concepts from a record."""
     return [
         {
@@ -47,5 +50,5 @@ def get_concepts(e):
             # TODO handle ConceptRelationList
             **concept.attrib
         }
-        for concept in e.findall('ConceptList/Concept')
+        for concept in element.findall('ConceptList/Concept')
     ]

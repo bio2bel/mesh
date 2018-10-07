@@ -5,7 +5,8 @@
 import json
 import logging
 import os
-from typing import Optional
+from typing import Dict, List, Mapping, Optional
+from xml.etree.ElementTree import Element
 
 from tqdm import tqdm
 
@@ -16,7 +17,7 @@ from ..constants import DESCRIPTOR_JSON_PATH, DESCRIPTOR_PATH, DESCRIPTOR_URL
 __all__ = [
     'download_descriptors',
     'get_descriptors_root',
-    'get_descriptors',
+    'get_descriptor_records',
 ]
 
 log = logging.getLogger(__name__)
@@ -24,7 +25,7 @@ log = logging.getLogger(__name__)
 download_descriptors = make_downloader(DESCRIPTOR_URL, DESCRIPTOR_PATH)
 
 
-def get_descriptors_root(path: Optional[str] = None, cache: bool = True, force_download: bool = False):
+def get_descriptors_root(path: Optional[str] = None, cache: bool = True, force_download: bool = False) -> Element:
     """Parse xml file as an ElementTree."""
     if path is None and cache:
         path = download_descriptors(force_download=force_download)
@@ -32,40 +33,35 @@ def get_descriptors_root(path: Optional[str] = None, cache: bool = True, force_d
     return parse_xml(path)
 
 
-def _get_descriptor_qualifiers(descriptor):
-    rv = []
-
-    for qualifier in descriptor.findall('AllowableQualifiersList/AllowableQualifier/QualifierReferredTo'):
-        qualifier_entry = {
+def _get_descriptor_qualifiers(descriptor: Element) -> List[Mapping]:
+    return [
+        {
             'qualifier_ui': qualifier.findtext('QualifierUI'),
             'name': qualifier.findtext('QualifierName/String'),
         }
-        rv.append(qualifier_entry)
+        for qualifier in descriptor.findall('AllowableQualifiersList/AllowableQualifier/QualifierReferredTo')
+    ]
 
-    return rv
 
-
-def _get_descriptor(e):  # TODO add ScopeNote as description
-    descriptor_entry = {
-        'descriptor_ui': e.findtext('DescriptorUI'),
-        'name': e.findtext('DescriptorName/String'),
+def _get_descriptor(element: Element) -> Dict:  # TODO add ScopeNote as description
+    return {
+        'descriptor_ui': element.findtext('DescriptorUI'),
+        'name': element.findtext('DescriptorName/String'),
         'tree_numbers': list({
             x.text
-            for x in e.findall('TreeNumberList/TreeNumber')
+            for x in element.findall('TreeNumberList/TreeNumber')
         }),
-        'concepts': get_concepts(e),
+        'concepts': get_concepts(element),
         # TODO handle AllowableQualifiersList
     }
 
-    return descriptor_entry
 
-
-def _get_descriptors(root):
+def _get_descriptors(element: Element) -> List[Mapping]:
     log.info('extract MeSH descriptors, concepts, and terms')
 
     rv = [
         _get_descriptor(descriptor)
-        for descriptor in tqdm(root, desc='Descriptors')
+        for descriptor in tqdm(element, desc='Descriptors')
     ]
 
     # cache tree numbers
@@ -89,7 +85,7 @@ def _get_descriptors(root):
     return rv
 
 
-def get_descriptors(path: Optional[str] = None, cache=True, force_download=False):
+def get_descriptor_records(path: Optional[str] = None, cache=True, force_download=False) -> List[Mapping]:
     """Get descriptors from a path."""
     if os.path.exists(DESCRIPTOR_JSON_PATH):
         log.info('loading cached descriptors json')
