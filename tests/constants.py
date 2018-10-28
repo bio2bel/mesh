@@ -10,5 +10,6 @@ __all__ = [
 ]
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-TEST_DESCRIPTORS_PATH = os.path.join(HERE, 'test.desc2017.xml')
-TEST_SUPPLEMENT_PATH = os.path.join(HERE, 'test.supp2017.xml')
+RESOURCES_DIRECTORY = os.path.join(HERE, 'resources')
+TEST_DESCRIPTORS_PATH = os.path.join(RESOURCES_DIRECTORY, 'test.desc2017.xml.gz')
+TEST_SUPPLEMENT_PATH = os.path.join(RESOURCES_DIRECTORY, 'test.supp2017.xml.gz')
