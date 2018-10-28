@@ -119,7 +119,7 @@ def mesh_to_nx(store: rdflib.Graph) -> nx.DiGraph:
     return graph
 
 
-def process_mesh(graph: nx.DiGraph, iri: Optional[str] = None) -> 'owlready.Ontology':
+def process_mesh(graph: nx.DiGraph, iri: Optional[str] = None):
     """Process the MeSH NetworkX graph."""
     import owlready
 

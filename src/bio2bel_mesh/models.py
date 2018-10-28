@@ -3,7 +3,7 @@
 """SQLAlchemy database models for Bio2BEL MeSH."""
 
 import itertools as itt
-from typing import Mapping
+from typing import Mapping, Optional
 
 from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
@@ -48,6 +48,16 @@ class Descriptor(Base):
     def is_chemical(self) -> bool:
         """Check if this term is a chemical."""
         return self._has_tree_prefix('D')
+
+    @property
+    def bel_encoding(self) -> Optional[str]:
+        """Get the BEL encoding for this descriptor."""
+        if self.is_pathology:
+            return 'O'
+        if self.is_process:
+            return 'B'
+        if self.is_chemical:
+            return 'A'
 
     def _not_has_tree_prefixes(self, prefixes) -> bool:
         return all(

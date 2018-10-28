@@ -8,7 +8,6 @@ from collections import Counter
 from typing import Iterable, List, Mapping, Optional, Tuple
 
 from networkx import relabel_nodes
-from sqlalchemy.ext.declarative import DeclarativeMeta
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
@@ -32,19 +31,16 @@ log = logging.getLogger(__name__)
 class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
     """Bio2BEL MeSH manager."""
 
+    _base = Base
     module_name = MODULE_NAME
     flask_admin_models = [Descriptor, Concept, Term, Tree]
 
     namespace_model = Descriptor
     identifiers_recommended = 'MeSH'
-    identifiers_pattern = '^(C|D)\d{6}$'
+    identifiers_pattern = r'^(C|D)\d{6}$'
     identifiers_miriam = 'MIR:00000560'
     identifiers_namespace = 'mesh'
     identifiers_url = 'http://identifiers.org/mesh/'
-
-    @property
-    def _base(self) -> DeclarativeMeta:
-        return Base
 
     def is_populated(self) -> bool:
         """Check if the database is already populated."""
@@ -58,9 +54,9 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         """List the descriptors from the database."""
         return self._list_model(Descriptor)
 
-    def get_descriptor_by_ui(self, ui: str) -> Optional[Descriptor]:
+    def get_descriptor_by_ui(self, descriptor_ui: str) -> Optional[Descriptor]:
         """Get a descriptor by its UI, if it exists."""
-        return self.session.query(Descriptor.descriptor_ui == ui).one_or_none()
+        return self.session.query(Descriptor.descriptor_ui == descriptor_ui).one_or_none()
 
     def get_descriptor_by_name(self, name: str) -> Optional[Descriptor]:
         """Get a descriptor by its name, if it exists."""
@@ -74,9 +70,9 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         """List the concepts from the database."""
         return self._list_model(Concept)
 
-    def get_concept_by_ui(self, ui) -> Optional[Concept]:
+    def get_concept_by_ui(self, concept_ui) -> Optional[Concept]:
         """Get a concept by its UI, if it exists."""
-        return self.session.query(Concept.concept_ui == ui).one_or_none()
+        return self.session.query(Concept.concept_ui == concept_ui).one_or_none()
 
     def count_terms(self) -> int:
         """Count the number of terms in the database."""
@@ -86,9 +82,9 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         """List the terms from the database."""
         return self._list_model(Term)
 
-    def get_term_by_ui(self, ui: str) -> Optional[Term]:
+    def get_term_by_ui(self, term_ui: str) -> Optional[Term]:
         """Get a term by its UI, if it exists."""
-        return self.session.query(Term.term_ui == ui).one_or_none()
+        return self.session.query(Term.term_ui == term_ui).one_or_none()
 
     def get_term_by_name(self, name: str) -> Optional[Term]:
         """Get a term by its name, if it exists."""
@@ -114,10 +110,10 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
 
     def _populate_supplement(self, path: Optional[str] = None) -> None:
         log.info('getting supplementary xml')
-        records = get_supplementary_records()
+        records = get_supplementary_records(path=path)
         self._populate_records(records)
 
-    def _populate_records(self, records):
+    def _populate_records(self, records: List[Mapping]) -> None:
         ui_descriptor = {d.descriptor_ui: d for d in self.list_descriptors()}
         ui_concept = {d.concept_ui: d for d in self.list_concepts()}
         ui_term = {d.term_ui: d for d in self.list_terms()}
@@ -168,20 +164,11 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         return descriptor.descriptor_ui
 
     def _create_namespace_entry_from_model(self, descriptor: Descriptor, namespace: Namespace) -> NamespaceEntry:
-        if descriptor.is_pathology:
-            encoding = 'O'
-        elif descriptor.is_process:
-            encoding = 'B'
-        elif descriptor.is_chemical:
-            encoding = 'A'
-        else:
-            encoding = None  # no idea. don't validate
-
         return NamespaceEntry(
             namespace=namespace,
             name=descriptor.name,
             identifier=descriptor.descriptor_ui,
-            encoding=encoding,
+            encoding=descriptor.bel_encoding,
         )
 
     def look_up_node(self, node: BaseEntity) -> Optional[Descriptor]:

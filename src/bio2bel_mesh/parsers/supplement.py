@@ -26,7 +26,7 @@ download_supplement = make_downloader(SUPPLEMENT_URL, SUPPLEMENT_PATH)
 
 
 def get_supplementary_records(path: Optional[str] = None, cache: bool = True, force_download: bool = False) -> List[
-    Mapping]:
+    Mapping]:  # noqa: E126
     """Get supplementary records."""
     if os.path.exists(SUPPLEMENT_JSON_PATH):
         log.info('loading cached supplemental records json')

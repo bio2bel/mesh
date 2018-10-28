@@ -33,7 +33,13 @@ INSTALL_REQUIRES = [
     'tqdm',
 ]
 EXTRAS_REQUIRE = {
-    'web': ['flask', 'flask-admin'],
+    'web': [
+        'flask',
+        'flask-admin',
+    ],
+    'owl': [
+        'owlready',
+    ]
 }
 ENTRY_POINTS = {
     'bio2bel': [
