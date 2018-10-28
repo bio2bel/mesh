@@ -1,8 +1,8 @@
 # -*- coding: utf-8 -*-
 
-"""Testing constants for Bio2BEL MeSH."""
+"""Tests for Bio2BEL MeSH."""
 
-from tests.constants import TemporaryCacheClass
+from tests.cases import TemporaryCacheClass
 
 
 class TestPopulation(TemporaryCacheClass):
@@ -10,4 +10,4 @@ class TestPopulation(TemporaryCacheClass):
 
     def test_counts(self):
         """Test the right number of things are added."""
-        self.assertEqual(6, self.manager.count_descriptors())
+        self.assertEqual(11, self.manager.count_descriptors())
