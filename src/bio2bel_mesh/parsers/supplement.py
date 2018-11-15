@@ -28,7 +28,7 @@ download_supplement = make_downloader(SUPPLEMENT_URL, SUPPLEMENT_PATH)
 def get_supplementary_records(path: Optional[str] = None, cache: bool = True, force_download: bool = False) -> List[
     Mapping]:  # noqa: E126
     """Get supplementary records."""
-    if os.path.exists(SUPPLEMENT_JSON_PATH):
+    if path is None and os.path.exists(SUPPLEMENT_JSON_PATH):
         log.info('loading cached supplemental records json')
         with open(SUPPLEMENT_JSON_PATH) as file:
             return json.load(file)
@@ -36,9 +36,10 @@ def get_supplementary_records(path: Optional[str] = None, cache: bool = True, fo
     root = get_supplement_root(path=path, cache=cache, force_download=force_download)
     rv = _get_terms(root)
 
-    with open(SUPPLEMENT_JSON_PATH, 'w') as file:
-        log.info('caching supplemental records json')
-        json.dump(rv, file, indent=2)
+    if path is None:
+        with open(SUPPLEMENT_JSON_PATH, 'w') as file:
+            log.info('caching supplemental records json')
+            json.dump(rv, file, indent=2)
 
     return rv
 
