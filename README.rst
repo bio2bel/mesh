@@ -43,8 +43,8 @@ Links
 - `MeSH FTP <ftp://ftp.nlm.nih.gov/online/mesh/>`_
 - `MeSH RDF Download <ftp://ftp.nlm.nih.gov/online/mesh/mesh.nt.gz>`_
 
-.. |build| image:: https://travis-ci.org/bio2bel/mesh.svg?branch=master
-    :target: https://travis-ci.org/bio2bel/mesh
+.. |build| image:: https://travis-ci.com/bio2bel/mesh.svg?branch=master
+    :target: https://travis-ci.com/bio2bel/mesh
     :alt: Build Status
 
 .. |coverage| image:: https://codecov.io/gh/bio2bel/mesh/coverage.svg?branch=master
