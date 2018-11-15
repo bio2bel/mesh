@@ -51,8 +51,8 @@ Links
     :target: https://codecov.io/gh/bio2bel/mesh?branch=master
     :alt: Coverage Status
 
-.. |documentation| image:: https://readthedocs.org/projects/mesh/badge/?version=latest
-    :target: http://mesh.readthedocs.io
+.. |documentation| image:: https://readthedocs.org/projects/bio2bel-mesh/badge/?version=latest
+    :target: https://bio2bel.readthedocs.io/projects/mesh/en/latest/?badge=latest
     :alt: Documentation Status
 
 .. |climate| image:: https://codeclimate.com/github/bio2bel/mesh/badges/gpa.svg
