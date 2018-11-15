@@ -1,5 +1,5 @@
-Bio2BEL MeSH |build| |coverage| |documentation|
-===============================================
+Bio2BEL MeSH |build| |coverage| |documentation| |zenodo|
+========================================================
 Converts the MeSH hierarchy to BEL
 
 Installation |pypi_version| |python_versions| |pypi_license|
@@ -67,3 +67,6 @@ Links
 
 .. |pypi_license| image:: https://img.shields.io/pypi/l/bio2bel_mesh.svg
     :alt: MIT License
+
+.. |zenodo| image:: https://zenodo.org/badge/107369801.svg
+    :target: https://zenodo.org/badge/latestdoi/107369801
