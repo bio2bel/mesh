@@ -6,6 +6,8 @@ import json
 import logging
 from typing import Iterable, TextIO
 
+from .constants import VERSION
+
 log = logging.getLogger(__name__)
 
 
