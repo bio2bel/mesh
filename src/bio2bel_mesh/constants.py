@@ -6,7 +6,7 @@ import os
 
 from bio2bel import get_data_dir
 
-VERSION = '0.0.1-dev'
+VERSION = '0.2.0-dev'
 
 MODULE_NAME = 'mesh'
 DATA_DIR = get_data_dir(MODULE_NAME)
