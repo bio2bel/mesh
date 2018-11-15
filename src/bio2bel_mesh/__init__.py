@@ -2,7 +2,8 @@
 
 """Bio2BEL MeSH."""
 
-from .manager import Manager  # noqa: F401s
+from .manager import Manager  # noqa: F401
+from .utils import get_version  # noqa: F401
 
 __version__ = '0.0.1-dev'
 
