@@ -80,8 +80,8 @@ class Descriptor(Base):
             for tree in self.trees
         )
 
-    def to_bel(self) -> pybel.dsl.BaseEntity:
-        """"""
+    def to_bel(self) -> Optional[pybel.dsl.BaseEntity]:
+        """Convert this MeSH term to a PyBEL DSL entry."""
         if self.is_pathology:
             dsl = pybel.dsl.Pathology
         elif self.is_process:
@@ -89,7 +89,8 @@ class Descriptor(Base):
         elif self.is_chemical:
             dsl = pybel.dsl.Abundance
         else:
-            dsl = lambda **kwargs: None
+            def dsl(**kwargs) -> None:
+                """Return none."""
 
         return dsl(
             namespace='mesh',
