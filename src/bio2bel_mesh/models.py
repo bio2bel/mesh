@@ -9,6 +9,7 @@ from sqlalchemy import Column, ForeignKey, Integer, String
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
 
+import pybel.dsl
 from .constants import MODULE_NAME
 
 Base: DeclarativeMeta = declarative_base()
@@ -77,6 +78,23 @@ class Descriptor(Base):
         return any(
             prefix in tree.name
             for tree in self.trees
+        )
+
+    def to_bel(self) -> pybel.dsl.BaseEntity:
+        """"""
+        if self.is_pathology:
+            dsl = pybel.dsl.Pathology
+        elif self.is_process:
+            dsl = pybel.dsl.BiologicalProcess
+        elif self.is_chemical:
+            dsl = pybel.dsl.Abundance
+        else:
+            dsl = lambda **kwargs: None
+
+        return dsl(
+            namespace='mesh',
+            name=self.name,
+            identifier=self.descriptor_ui,
         )
 
 

@@ -5,12 +5,15 @@
 import logging
 import time
 from collections import Counter
+from itertools import groupby
+from operator import itemgetter
 from typing import Iterable, List, Mapping, Optional, Tuple
 
 from networkx import relabel_nodes
 from tqdm import tqdm
 
 from bio2bel import AbstractManager
+from bio2bel.manager.bel_manager import BELManagerMixin
 from bio2bel.manager.flask_manager import FlaskMixin
 from bio2bel.manager.namespace_manager import BELNamespaceManagerMixin
 from pybel import BELGraph
@@ -28,7 +31,7 @@ __all__ = [
 log = logging.getLogger(__name__)
 
 
-class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
+class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskMixin):
     """Bio2BEL MeSH manager."""
 
     _base = Base
@@ -216,3 +219,38 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, FlaskMixin):
         relabel_nodes(graph, mapping, copy=False)
 
         return Counter(fixed_namespaces)
+
+    def to_bel(self) -> BELGraph:
+        """Dump the MeSH tree in BEL."""
+        graph = BELGraph(
+            name='MeSH Hierarchy',
+            version='0.0.0',
+        )
+
+        tree_parent = {}
+        tree_bel = {}
+        query = self.session.query(Descriptor, Tree).join(Tree)
+        total = query.count()
+        it = groupby(
+            tqdm(
+                query,
+                total=total,
+                desc='Mapping MeSH hierarchy',
+            ),
+            key=itemgetter(0),
+        )
+        for descriptor, trees in it:
+            sub = descriptor.to_bel()
+            if sub is None:
+                continue
+            for _, tree in trees:
+                tree_parent[tree.name] = tree.name.rsplit('.', 1)[0]
+                tree_bel[tree.name] = sub
+
+        for child, parent in tqdm(tree_parent.items(), desc='Converting to BEL'):
+            child_bel = tree_bel.get(child)
+            parent_bel = tree_bel.get(parent)
+            if child_bel is not None and parent_bel is not None:
+                graph.add_is_a(child_bel, parent_bel)
+
+        return graph
