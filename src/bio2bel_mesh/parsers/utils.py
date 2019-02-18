@@ -5,7 +5,7 @@
 import gzip
 import logging
 import time
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # noqa: N814
 from typing import List, Mapping
 from xml.etree.ElementTree import Element
 
