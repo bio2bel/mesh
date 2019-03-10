@@ -45,6 +45,9 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskM
     identifiers_namespace = 'mesh'
     identifiers_url = 'http://identifiers.org/mesh/'
 
+    is_namespace = True
+    is_annotation = True
+
     def is_populated(self) -> bool:
         """Check if the database is already populated."""
         return 0 < self.count_terms()
