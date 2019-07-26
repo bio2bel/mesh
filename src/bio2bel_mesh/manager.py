@@ -215,23 +215,30 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskM
         if term:
             return term.concept.descriptor
 
-    def iter_nodes(self, graph: BELGraph) -> Iterable[Tuple[BaseEntity, Descriptor]]:
+        log.warning('Could not map MeSH node: %r', node)
+
+    def iter_nodes(self, graph: BELGraph, use_tqdm: bool = False) -> Iterable[Tuple[BaseEntity, Descriptor]]:
         """Iterate over nodes in a BEL graph that can be normalized to MeSH Descriptors."""
-        for node in graph:
+        it = (
+            tqdm(graph, desc='MeSH terms')
+            if use_tqdm else
+            graph
+        )
+        for node in it:
             descriptor = self.look_up_node(node)
             if descriptor is not None:
                 yield node, descriptor
 
-    def normalize_terms(self, graph: BELGraph) -> Counter:
+    def normalize_terms(self, graph: BELGraph, use_tqdm: bool = False) -> Counter:
         """Add identifiers to all MeSH terms and return a counter of the namespaces fixed."""
         self.add_namespace_to_graph(graph)
 
         mapping = {}
         fixed_namespaces = []
 
-        for node, descriptor in self.iter_nodes(graph):
+        for node, descriptor in self.iter_nodes(graph, use_tqdm=use_tqdm):
             if any(x in node for x in (VARIANTS, MEMBERS, REACTANTS, FUSION)):
-                log.info('skipping: %s', node)
+                log.debug('skipping: %s', node)
                 continue
 
             fixed_namespaces.append(node[NAMESPACE])

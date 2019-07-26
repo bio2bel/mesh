@@ -56,7 +56,7 @@ def _get_descriptors(element: Element) -> List[Mapping]:
 
     rv = [
         _get_descriptor(descriptor)
-        for descriptor in tqdm(element, desc='Descriptors')
+        for descriptor in tqdm(element, desc='Getting MeSH Descriptors')
     ]
     log.debug(f'got {len(rv)} descriptors')
 
