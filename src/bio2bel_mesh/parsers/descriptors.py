@@ -72,7 +72,11 @@ def _get_descriptors(element: Element) -> List[Mapping]:
     for descriptor in rv:
         parents_descriptor_uis = set()
         for tree_number in descriptor['tree_numbers']:
-            parent_tn, self_tn = tree_number.rsplit('.', 1)
+            try:
+                parent_tn, self_tn = tree_number.rsplit('.', 1)
+            except ValueError:
+                log.debug('No dot for %s', tree_number)
+                continue
 
             parent_descriptor_ui = tree_number_to_descriptor_ui.get(parent_tn)
             if parent_descriptor_ui is not None:
