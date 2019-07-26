@@ -130,12 +130,35 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskM
 
             descriptor = ui_descriptor.get(descriptor_ui)
             if descriptor is None:
+                tree_names = descriptor_xml.get('tree_numbers', [])
+
+                is_pathology = any(
+                    tree_name.startswith(prefix)
+                    for tree_name in tree_names
+                    for prefix in ('C', 'F')
+                )
+                is_process = any(
+                    tree_name.startswith('G')
+                    for tree_name in tree_names
+                ) and not any(
+                    tree_name.startswith(prefix)
+                    for tree_name in tree_names
+                    for prefix in ('G01', 'G15', 'G17')
+                )
+                is_chemical = any(
+                    tree_name.startswith('D')
+                    for tree_name in tree_names
+                )
+
                 descriptor = Descriptor(
                     descriptor_ui=descriptor_ui,
                     name=descriptor_xml['name'],
+                    is_pathology=is_pathology,
+                    is_process=is_process,
+                    is_chemical=is_chemical,
                     trees=[
-                        Tree(name=name)
-                        for name in descriptor_xml.get('tree_numbers', [])
+                        Tree(name=tree_name)
+                        for tree_name in tree_names
                     ],
                 )
                 self.session.add(descriptor)

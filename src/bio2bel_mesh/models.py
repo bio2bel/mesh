@@ -5,7 +5,7 @@
 import itertools as itt
 from typing import Mapping, Optional
 
-from sqlalchemy import Column, ForeignKey, Integer, String
+from sqlalchemy import Column, ForeignKey, Integer, String, Boolean
 from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
 
@@ -33,23 +33,13 @@ class Descriptor(Base):
 
     name = Column(String(255), nullable=False, unique=True, index=True, doc='MeSH descriptor label')
 
+    is_pathology = Column(Boolean, default=False)
+    is_process = Column(Boolean, default=False)
+    is_chemical = Column(Boolean, default=False)
+
     def __str__(self):
         return self.name
 
-    @property
-    def is_pathology(self) -> bool:
-        """Check if this term is a pathology/phenotype."""
-        return self._has_tree_prefixes(['C', 'F'])
-
-    @property
-    def is_process(self) -> bool:
-        """Check if this term is a process."""
-        return self._has_tree_prefix('G') and self._not_has_tree_prefixes(['G01', 'G15', 'G17'])
-
-    @property
-    def is_chemical(self) -> bool:
-        """Check if this term is a chemical."""
-        return self._has_tree_prefix('D')
 
     @property
     def bel_encoding(self) -> str:
