@@ -10,6 +10,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
 
 import pybel.dsl
+from pybel.constants import BELNS_ENCODING_STR
 from .constants import MODULE_NAME
 
 Base: DeclarativeMeta = declarative_base()
@@ -51,14 +52,16 @@ class Descriptor(Base):
         return self._has_tree_prefix('D')
 
     @property
-    def bel_encoding(self) -> Optional[str]:
+    def bel_encoding(self) -> str:
         """Get the BEL encoding for this descriptor."""
         if self.is_pathology:
             return 'O'
-        if self.is_process:
+        elif self.is_process:
             return 'B'
-        if self.is_chemical:
+        elif self.is_chemical:
             return 'A'
+        else:
+            return BELNS_ENCODING_STR
 
     def _not_has_tree_prefixes(self, prefixes) -> bool:
         return all(
