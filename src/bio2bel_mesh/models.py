@@ -10,7 +10,7 @@ from sqlalchemy.ext.declarative import DeclarativeMeta, declarative_base
 from sqlalchemy.orm import backref, relationship
 
 import pybel.dsl
-from pybel.constants import BELNS_ENCODING_STR
+from pybel.constants import belns_encodings
 from .constants import MODULE_NAME
 
 Base: DeclarativeMeta = declarative_base()
@@ -57,7 +57,7 @@ class Descriptor(Base):
         if self.is_process:
             rv.add('B')
         if self.is_protein:
-            rv.add('GRP')
+            rv.update('GRP')
         if self.is_complex:
             rv.add('C')
 
