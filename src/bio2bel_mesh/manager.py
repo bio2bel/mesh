@@ -132,10 +132,50 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskM
             if descriptor is None:
                 tree_names = descriptor_xml.get('tree_numbers', [])
 
+                is_anatomy = any(
+                    tree_name.startswith('A')
+                    for tree_name in tree_names
+                )
+                is_organism = any(
+                    tree_name.startswith('B')
+                    for tree_name in tree_names
+                )
                 is_pathology = any(
                     tree_name.startswith(prefix)
                     for tree_name in tree_names
                     for prefix in ('C', 'F')
+                )
+                is_chemical = any(
+                    tree_name.startswith('D')
+                    for tree_name in tree_names
+                    if not any(
+                        tree_name.startswith(prefix)
+                        for prefix in (
+                            'D05.500',  # multiprotein complexes
+                            'D12.776',  # protein
+                            'D08.811',  # enzymes
+                            'D08.244',  # cytochromes
+                            'D08.622',  # enzyme precursors
+                        )
+                    )
+                )
+                is_protein = any(
+                    tree_name.startswith(prefix)
+                    for tree_name in tree_names
+                    for prefix in (
+                        'D12.776',  # protein
+                        'D08.811',  # enzymes
+                        'D08.244',  # cytochromes
+                        'D08.622',  # enzyme precursors
+                    )
+                )
+                is_complex = any(
+                    tree_name.startswith('D05.500')
+                    for tree_name in tree_names
+                )
+                is_measurement = any(
+                    tree_name.startswith('E')
+                    for tree_name in tree_names
                 )
                 is_process = any(
                     tree_name.startswith('G')
@@ -145,17 +185,18 @@ class Manager(AbstractManager, BELNamespaceManagerMixin, BELManagerMixin, FlaskM
                     for tree_name in tree_names
                     for prefix in ('G01', 'G15', 'G17')
                 )
-                is_chemical = any(
-                    tree_name.startswith('D')
-                    for tree_name in tree_names
-                )
 
                 descriptor = Descriptor(
                     descriptor_ui=descriptor_ui,
                     name=descriptor_xml['name'],
+                    is_anatomy=is_anatomy,
+                    is_organism=is_organism,
                     is_pathology=is_pathology,
-                    is_process=is_process,
                     is_chemical=is_chemical,
+                    is_protein=is_protein,
+                    is_complex=is_complex,
+                    is_measurement=is_measurement,
+                    is_process=is_process,
                     trees=[
                         Tree(name=tree_name)
                         for tree_name in tree_names

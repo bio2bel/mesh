@@ -33,25 +33,38 @@ class Descriptor(Base):
 
     name = Column(String(255), nullable=False, unique=True, index=True, doc='MeSH descriptor label')
 
+    is_anatomy = Column(Boolean, default=False)
+    is_organism = Column(Boolean, default=False)
     is_pathology = Column(Boolean, default=False)
-    is_process = Column(Boolean, default=False)
     is_chemical = Column(Boolean, default=False)
+    is_protein = Column(Boolean, default=False)
+    is_complex = Column(Boolean, default=False)
+    is_measurement = Column(Boolean, default=False)
+    is_process = Column(Boolean, default=False)
 
     def __str__(self):
         return self.name
 
-
     @property
     def bel_encoding(self) -> str:
         """Get the BEL encoding for this descriptor."""
-        if self.is_pathology:
-            return 'O'
-        elif self.is_process:
-            return 'B'
-        elif self.is_chemical:
-            return 'A'
-        else:
-            return BELNS_ENCODING_STR
+        rv = set()
+
+        if self.is_anatomy or self.is_chemical or self.is_organism:
+            rv.add('A')
+        if self.is_pathology or self.is_measurement:
+            rv.add('O')
+        if self.is_process:
+            rv.add('B')
+        if self.is_protein:
+            rv.add('GRP')
+        if self.is_complex:
+            rv.add('C')
+
+        if not rv:
+            rv = set(belns_encodings)
+
+        return ''.join(sorted(rv))
 
     def _not_has_tree_prefixes(self, prefixes) -> bool:
         return all(
